@@ -68,70 +68,6 @@ public final class DiskLruCacheTest {
     assertJournalEquals();
   }
 
-  @Test public void validateKey() throws Exception {
-    String key = null;
-    try {
-      key = "has_space ";
-      cache.edit(key);
-      fail("Exepcting an IllegalArgumentException as the key was invalid.");
-    } catch (IllegalArgumentException iae) {
-      assertThat(iae.getMessage()).isEqualTo(
-          "keys must match regex [a-z0-9_-]{1,64}: \"" + key + "\"");
-    }
-    try {
-      key = "has_CR\r";
-      cache.edit(key);
-      fail("Exepcting an IllegalArgumentException as the key was invalid.");
-    } catch (IllegalArgumentException iae) {
-      assertThat(iae.getMessage()).isEqualTo(
-          "keys must match regex [a-z0-9_-]{1,64}: \"" + key + "\"");
-    }
-    try {
-      key = "has_LF\n";
-      cache.edit(key);
-      fail("Exepcting an IllegalArgumentException as the key was invalid.");
-    } catch (IllegalArgumentException iae) {
-      assertThat(iae.getMessage()).isEqualTo(
-          "keys must match regex [a-z0-9_-]{1,64}: \"" + key + "\"");
-    }
-    try {
-      key = "has_invalid/";
-      cache.edit(key);
-      fail("Exepcting an IllegalArgumentException as the key was invalid.");
-    } catch (IllegalArgumentException iae) {
-      assertThat(iae.getMessage()).isEqualTo(
-          "keys must match regex [a-z0-9_-]{1,64}: \"" + key + "\"");
-    }
-    try {
-      key = "has_invalid\u2603";
-      cache.edit(key);
-      fail("Exepcting an IllegalArgumentException as the key was invalid.");
-    } catch (IllegalArgumentException iae) {
-      assertThat(iae.getMessage()).isEqualTo(
-          "keys must match regex [a-z0-9_-]{1,64}: \"" + key + "\"");
-    }
-    try {
-      key = "this_is_way_too_long_this_is_way_too_long_this_is_way_too_long_this_is_way_too_long";
-      cache.edit(key);
-      fail("Exepcting an IllegalArgumentException as the key was too long.");
-    } catch (IllegalArgumentException iae) {
-      assertThat(iae.getMessage()).isEqualTo(
-          "keys must match regex [a-z0-9_-]{1,64}: \"" + key + "\"");
-    }
-
-    // Test valid cases.
-
-    // Exactly 64.
-    key = "0123456789012345678901234567890123456789012345678901234567890123";
-    cache.edit(key).abort();
-    // Contains all valid characters.
-    key = "abcdefghijklmnopqrstuvwxyz_0123456789";
-    cache.edit(key).abort();
-    // Contains dash.
-    key = "-20384573948576";
-    cache.edit(key).abort();
-  }
-
   @Test public void writeAndReadEntry() throws Exception {
     DiskLruCache.Editor creator = cache.edit("k1");
     creator.set(0, "ABC");
@@ -381,38 +317,6 @@ public final class DiskLruCacheTest {
     cache = DiskLruCache.open(cacheDir, appVersion, 2, Integer.MAX_VALUE);
     assertGarbageFilesAllDeleted();
     assertThat(cache.get("k1")).isNull();
-  }
-
-  @Test public void keyWithSpaceNotPermitted() throws Exception {
-    try {
-      cache.edit("my key");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
-  @Test public void keyWithNewlineNotPermitted() throws Exception {
-    try {
-      cache.edit("my\nkey");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
-  @Test public void keyWithCarriageReturnNotPermitted() throws Exception {
-    try {
-      cache.edit("my\rkey");
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
-  @Test public void nullKeyThrows() throws Exception {
-    try {
-      cache.edit(null);
-      fail();
-    } catch (NullPointerException expected) {
-    }
   }
 
   @Test public void createNewEntryWithTooFewValuesFails() throws Exception {
@@ -772,7 +676,7 @@ public final class DiskLruCacheTest {
     File dir = new File(javaTmpDir, "testOpenCreatesDirectoryIfNecessary");
     cache = DiskLruCache.open(dir, appVersion, 2, Integer.MAX_VALUE);
     set("a", "a", "a");
-    assertThat(new File(dir, "a.0").exists()).isTrue();
+    assertThat(new File(dir, "a").exists()).isTrue();
     assertThat(new File(dir, "a.1").exists()).isTrue();
     assertThat(new File(dir, "journal").exists()).isTrue();
   }
@@ -918,6 +822,9 @@ public final class DiskLruCacheTest {
   }
 
   private File getCleanFile(String key, int index) {
+	if (index == 0) {
+	  return new File(cacheDir, key);
+	}
     return new File(cacheDir, key + "." + index);
   }
 
