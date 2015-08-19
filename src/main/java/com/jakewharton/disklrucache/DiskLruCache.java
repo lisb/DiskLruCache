@@ -175,7 +175,8 @@ public final class DiskLruCache implements Closeable {
     }
   };
 
-  private DiskLruCache(File directory, int appVersion, int valueCount, int keepCount, long maxSize) {
+  private DiskLruCache(File directory, int appVersion, int valueCount, int keepCount,
+                       long maxSize) {
     this.directory = directory;
     this.appVersion = appVersion;
     this.journalFile = new File(directory, JOURNAL_FILE);
@@ -197,20 +198,22 @@ public final class DiskLruCache implements Closeable {
    */
   public static DiskLruCache open(File directory, int appVersion, int valueCount, long maxSize)
       throws IOException {
-	  return open(directory, appVersion, valueCount, 0, maxSize);
+    return open(directory, appVersion, valueCount, 0, maxSize);
   }
-  
+
   /**
    * Opens the cache in {@code directory}, creating a cache if none exists
    * there.
    *
    * @param directory a writable directory
    * @param valueCount the number of values per cache entry. Must be positive.
-   * @param keepCount the number of cache entry keep whether or not size exceed. Must be positive or 0.
+   * @param keepCount the number of cache entry keep whether or not size exceed.
+   *                  Must be positive or 0.
    * @param maxSize the maximum number of bytes this cache should use to store
    * @throws IOException if reading or writing the cache directory fails
    */
-  public static DiskLruCache open(File directory, int appVersion, int valueCount, int keepCount, long maxSize)
+  public static DiskLruCache open(File directory, int appVersion, int valueCount, int keepCount,
+                                  long maxSize)
       throws IOException {
     if (maxSize <= 0) {
       throw new IllegalArgumentException("maxSize <= 0");
@@ -431,22 +434,22 @@ public final class DiskLruCache implements Closeable {
 
     File file = entry.getCleanFile(index);
     if (!file.exists()) {
-    	return null;
+      return null;
     }
-    
+
     redundantOpCount++;
     journalWriter.append(READ + ' ' + key + '\n');
     if (journalRebuildRequired()) {
       executorService.submit(cleanupCallable);
     }
-    
+
     return file;
   }
-  
+
   public synchronized long getTotalSize() {
-	  return size;
+    return size;
   }
-  
+
   /**
    * Returns a snapshot of the entry named {@code key}, or null if it doesn't
    * exist is not currently readable. If a value is returned, it is moved to
@@ -580,7 +583,7 @@ public final class DiskLruCache implements Closeable {
         if (dirty.exists()) {
           File clean = entry.getCleanFile(i);
           if (!dirty.renameTo(clean)) {
-        	  throw new IOException("Can't rename dirty to clean for index " + i);
+            throw new IOException("Can't rename dirty to clean for index " + i);
           }
           long oldLength = entry.lengths[i];
           long newLength = clean.length();
@@ -688,23 +691,23 @@ public final class DiskLruCache implements Closeable {
   }
 
   public void trimToSize(final long spaceRequired) throws IOException {
-	final Set<Map.Entry<String, Entry>> entrySet = lruEntries.entrySet();
+    final Set<Map.Entry<String, Entry>> entrySet = lruEntries.entrySet();
     while (!entrySet.isEmpty()) {
       if (directory.getUsableSpace() >= spaceRequired) {
         if (size <= maxSize) {
           break;
         }
-      
+
         if (entrySet.size() <= keepCount) {
           break;
         }
       }
-      
+
       // Can't keep Iterator because remove(key) invoke Map#remove(key)
       Map.Entry<String, Entry> toEvict = entrySet.iterator().next();
       remove(toEvict.getKey());
     }
-    
+
     if (directory.getUsableSpace() < spaceRequired) {
         throw new IOException("Can't reserve space.");
     }
@@ -786,16 +789,16 @@ public final class DiskLruCache implements Closeable {
       this.entry = entry;
       this.written = (entry.readable) ? null : new boolean[valueCount];
     }
-    
+
     /**
-     * NOTE: File may not exist. 
+     * NOTE: File may not exist.
      */
     public File getCleanFile(int index) {
-    	synchronized (DiskLruCache.this) {
-    		return entry.getCleanFile(index);
-    	}
+      synchronized (DiskLruCache.this) {
+        return entry.getCleanFile(index);
+      }
     }
-    
+
     /**
      * Returns an unbuffered input stream to read the last committed value,
      * or null if no value has been committed.
@@ -945,7 +948,7 @@ public final class DiskLruCache implements Closeable {
 
     public File getCleanFile(int i) {
       if (i == 0) {
-    	  return new File(directory, key);
+        return new File(directory, key);
       }
       return new File(directory, key + "." + i);
     }
