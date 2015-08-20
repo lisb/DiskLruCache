@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.jakewharton.disklrucache;
+package com.lisb.disklrucache;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,10 +32,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.jakewharton.disklrucache.DiskLruCache.JOURNAL_FILE;
-import static com.jakewharton.disklrucache.DiskLruCache.JOURNAL_FILE_BACKUP;
-import static com.jakewharton.disklrucache.DiskLruCache.MAGIC;
-import static com.jakewharton.disklrucache.DiskLruCache.VERSION_1;
 import static org.fest.assertions.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
 
@@ -51,8 +47,8 @@ public final class DiskLruCacheTest {
     javaTmpDir = System.getProperty("java.io.tmpdir");
     cacheDir = new File(javaTmpDir, "DiskLruCacheTest");
     cacheDir.mkdir();
-    journalFile = new File(cacheDir, JOURNAL_FILE);
-    journalBkpFile = new File(cacheDir, JOURNAL_FILE_BACKUP);
+    journalFile = new File(cacheDir, DiskLruCache.JOURNAL_FILE);
+    journalBkpFile = new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP);
     for (File file : cacheDir.listFiles()) {
       file.delete();
     }
@@ -252,7 +248,7 @@ public final class DiskLruCacheTest {
   @Test public void openWithInvalidVersionClearsDirectory() throws Exception {
     cache.close();
     generateSomeGarbageFiles();
-    createJournalWithHeader(MAGIC, "0", "100", "2", "");
+    createJournalWithHeader(DiskLruCache.MAGIC, "0", "100", "2", "");
     cache = DiskLruCache.open(cacheDir, appVersion, 2, Integer.MAX_VALUE);
     assertGarbageFilesAllDeleted();
   }
@@ -260,7 +256,7 @@ public final class DiskLruCacheTest {
   @Test public void openWithInvalidAppVersionClearsDirectory() throws Exception {
     cache.close();
     generateSomeGarbageFiles();
-    createJournalWithHeader(MAGIC, "1", "101", "2", "");
+    createJournalWithHeader(DiskLruCache.MAGIC, "1", "101", "2", "");
     cache = DiskLruCache.open(cacheDir, appVersion, 2, Integer.MAX_VALUE);
     assertGarbageFilesAllDeleted();
   }
@@ -268,7 +264,7 @@ public final class DiskLruCacheTest {
   @Test public void openWithInvalidValueCountClearsDirectory() throws Exception {
     cache.close();
     generateSomeGarbageFiles();
-    createJournalWithHeader(MAGIC, "1", "100", "1", "");
+    createJournalWithHeader(DiskLruCache.MAGIC, "1", "100", "1", "");
     cache = DiskLruCache.open(cacheDir, appVersion, 2, Integer.MAX_VALUE);
     assertGarbageFilesAllDeleted();
   }
@@ -276,7 +272,7 @@ public final class DiskLruCacheTest {
   @Test public void openWithInvalidBlankLineClearsDirectory() throws Exception {
     cache.close();
     generateSomeGarbageFiles();
-    createJournalWithHeader(MAGIC, "1", "100", "2", "x");
+    createJournalWithHeader(DiskLruCache.MAGIC, "1", "100", "2", "x");
     cache = DiskLruCache.open(cacheDir, appVersion, 2, Integer.MAX_VALUE);
     assertGarbageFilesAllDeleted();
   }
@@ -304,7 +300,7 @@ public final class DiskLruCacheTest {
     writeFile(getCleanFile("k1", 0), "A");
     writeFile(getCleanFile("k1", 1), "B");
     Writer writer = new FileWriter(journalFile);
-    writer.write(MAGIC + "\n" + VERSION_1 + "\n100\n2\n\nCLEAN k1 1 1"); // no trailing newline
+    writer.write(DiskLruCache.MAGIC + "\n" + DiskLruCache.VERSION_1 + "\n100\n2\n\nCLEAN k1 1 1"); // no trailing newline
     writer.close();
     cache = DiskLruCache.open(cacheDir, appVersion, 2, Integer.MAX_VALUE);
     assertThat(cache.get("k1")).isNull();
@@ -782,8 +778,8 @@ public final class DiskLruCacheTest {
 
   private void assertJournalEquals(String... expectedBodyLines) throws Exception {
     List<String> expectedLines = new ArrayList<String>();
-    expectedLines.add(MAGIC);
-    expectedLines.add(VERSION_1);
+    expectedLines.add(DiskLruCache.MAGIC);
+    expectedLines.add(DiskLruCache.VERSION_1);
     expectedLines.add("100");
     expectedLines.add("2");
     expectedLines.add("");
@@ -792,7 +788,7 @@ public final class DiskLruCacheTest {
   }
 
   private void createJournal(String... bodyLines) throws Exception {
-    createJournalWithHeader(MAGIC, VERSION_1, "100", "2", "", bodyLines);
+    createJournalWithHeader(DiskLruCache.MAGIC, DiskLruCache.VERSION_1, "100", "2", "", bodyLines);
   }
 
   private void createJournalWithHeader(String magic, String version, String appVersion,
